@@ -95,13 +95,33 @@ for t in "${targets[@]}"; do
   esac
 done
 
-echo ""
-echo "Done. Next steps:"
-echo "  1. Install ffmpeg if needed:  brew install ffmpeg"
-echo "  2. Get Aliyun Bailian API Key (recommended):  https://bailian.console.aliyun.com/"
-echo "     bash <install-dir>/scripts/configure.sh aliyun sk_YOUR_KEY"
-echo "     Or Groq (free fallback):  https://console.groq.com/keys"
-echo "     bash <install-dir>/scripts/configure.sh groq gsk_YOUR_KEY"
-echo ""
-echo "Then restart your AI tool and try:"
-echo "  帮我把这期小宇宙播客转成逐字稿 https://www.xiaoyuzhoufm.com/episode/EPISODE_ID"
+# Remember last install path for setup hints
+LAST_INSTALL="${base_global}/.xiaoyuzhou-transcribe/last_install_dir"
+mkdir -p "$(dirname "$LAST_INSTALL")"
+if [[ "$SCOPE" == "global" ]]; then
+  case "$AGENT" in
+    cursor) printf '%s' "$base_global/.cursor/skills/$SKILL_NAME" > "$LAST_INSTALL" ;;
+    claude) printf '%s' "$base_global/.claude/skills/$SKILL_NAME" > "$LAST_INSTALL" ;;
+    all) printf '%s' "$base_global/.claude/skills/$SKILL_NAME" > "$LAST_INSTALL" ;;
+    *) printf '%s' "$base_project/.claude/skills/$SKILL_NAME" > "$LAST_INSTALL" 2>/dev/null || true ;;
+  esac
+else
+  printf '%s' "$base_project/.claude/skills/$SKILL_NAME" > "$LAST_INSTALL" 2>/dev/null || \
+    printf '%s' "$base_project/skills/$SKILL_NAME" > "$LAST_INSTALL" 2>/dev/null || true
+fi
+
+HINT_SCRIPT=""
+for d in \
+  "$base_global/.claude/skills/$SKILL_NAME/scripts/setup-hint.sh" \
+  "$base_project/.claude/skills/$SKILL_NAME/scripts/setup-hint.sh" \
+  "$base_project/skills/$SKILL_NAME/scripts/setup-hint.sh"; do
+  if [[ -f "$d" ]]; then HINT_SCRIPT="$d"; break; fi
+done
+
+if [[ -n "$HINT_SCRIPT" ]]; then
+  bash "$HINT_SCRIPT"
+else
+  echo ""
+  echo "Done. Next: configure API Key — aliyun | minimax | doubao | siliconflow"
+  echo "  bash <skill-dir>/scripts/configure.sh aliyun sk_YOUR_KEY"
+fi

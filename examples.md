@@ -14,14 +14,21 @@ bash scripts/transcribe.sh "https://www.xiaoyuzhoufm.com/episode/EPISODE_ID"
 bash scripts/transcribe.sh --model paraformer-v2 "EPISODE_URL" ./out.md
 ```
 
-## 示例 3：Groq 转写
+## 示例 3：豆包语音转写
 
 ```bash
-bash scripts/configure.sh groq gsk-xxxxxxxx
-bash scripts/transcribe.sh --provider groq "EPISODE_URL"
+bash scripts/configure.sh doubao <火山API-Key>
+bash scripts/transcribe.sh --provider doubao "EPISODE_URL"
 ```
 
-## 示例 4：转写 + 总结
+## 示例 4：硅基流动转写
+
+```bash
+bash scripts/configure.sh siliconflow sk-xxxxxxxx
+bash scripts/transcribe.sh --provider siliconflow "EPISODE_URL"
+```
+
+## 示例 5：转写 + 总结
 
 用户：
 
@@ -30,12 +37,4 @@ bash scripts/transcribe.sh --provider groq "EPISODE_URL"
 https://www.xiaoyuzhoufm.com/episode/EPISODE_ID
 ```
 
-Agent：`check.sh` → 配置百炼 Key → `transcribe.sh` → 输出核心内容 / 建议 / 金句
-
-## 示例 5：带标点润色（需 Groq Key）
-
-```bash
-bash scripts/transcribe.sh --polish "EPISODE_URL" ./transcript.md
-```
-
-阿里云转写 + Groq Llama 补标点。
+Agent：`check.sh` → 配置 API Key → `transcribe.sh` → 输出核心内容 / 建议 / 金句

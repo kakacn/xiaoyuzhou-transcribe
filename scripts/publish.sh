@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO="kakacn/xiaoyuzhou-transcribe"
-DESC="Agent Skill: transcribe Xiaoyuzhou (小宇宙) podcasts to Markdown via Groq Whisper"
+DESC="Agent Skill: transcribe Xiaoyuzhou (小宇宙) podcasts via Aliyun/Doubao/SiliconFlow"
 
 cd "$(dirname "$0")/.."
 

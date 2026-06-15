@@ -188,12 +188,6 @@ case "$PROVIDER" in
   aliyun) transcribe_aliyun ;;
   doubao) transcribe_doubao ;;
   siliconflow) transcribe_siliconflow ;;
-  minimax)
-    echo "Error: MiniMax 录音转写 ASR 尚未在官方开放平台开放，请改用:" >&2
-    echo "  bash $SCRIPT_DIR/transcribe.sh --provider aliyun|doubao|siliconflow <url>" >&2
-    echo "可先 bash $SCRIPT_DIR/configure.sh minimax sk-... 保存 Key 备用。" >&2
-    exit 1
-    ;;
   *) echo "Error: unknown provider '$PROVIDER'" >&2; exit 1 ;;
 esac
 merge_output

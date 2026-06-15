@@ -63,21 +63,10 @@ xy_get_siliconflow_model() {
   echo "${v:-FunAudioLLM/SenseVoiceSmall}"
 }
 
-xy_get_minimax_key() {
-  [[ -n "${MINIMAX_API_KEY:-}" ]] && echo "$MINIMAX_API_KEY" && return
-  xy_read_file "$(xy_config_path minimax_api_key)"
-}
-
-xy_get_minimax_group_id() {
-  [[ -n "${MINIMAX_GROUP_ID:-}" ]] && echo "$MINIMAX_GROUP_ID" && return
-  xy_read_file "$(xy_config_path minimax_group_id)"
-}
-
 xy_provider_configured() {
   local p="$1"
   case "$p" in
     aliyun) [[ -n "$(xy_get_dashscope_key)" ]] ;;
-    minimax) [[ -n "$(xy_get_minimax_key)" ]] ;;
     doubao)
       [[ -n "$(xy_get_volc_api_key)" ]] || {
         [[ -n "$(xy_get_volc_app_key)" && -n "$(xy_get_volc_access_key)" ]]

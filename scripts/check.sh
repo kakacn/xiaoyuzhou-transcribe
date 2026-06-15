@@ -27,7 +27,7 @@ status_line() {
 }
 
 any_configured=0
-for p in aliyun minimax doubao siliconflow; do
+for p in aliyun doubao siliconflow; do
   xy_provider_configured "$p" && any_configured=1
 done
 
@@ -35,11 +35,10 @@ if [[ $SHOW_ALL -eq 1 ]]; then
   echo "==> Provider keys (~/.xiaoyuzhou-transcribe/)"
   echo "    default: $(xy_get_provider)"
   echo ""
-  for p in aliyun minimax doubao siliconflow; do
+  for p in aliyun doubao siliconflow; do
     if xy_provider_configured "$p"; then
       case "$p" in
         aliyun) status_line "$p" yes "model=$(xy_get_dashscope_model)" ;;
-        minimax) status_line "$p" yes "key set（转写待官方 ASR）" ;;
         doubao)
           if [[ -n "$(xy_get_volc_api_key)" ]]; then
             status_line "$p" yes "new-console"
@@ -72,17 +71,6 @@ case "$PROVIDER" in
       *) echo "OK: provider=aliyun, model=$model, key set (probe HTTP $http)" ;;
     esac
     ;;
-  minimax)
-    key="$(xy_get_minimax_key)"
-    [[ -n "$key" ]] || fail "MiniMax key missing. Run: configure.sh minimax sk-..."
-    http=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" \
-      "https://api.minimaxi.com/v1/models")
-    case "$http" in
-      200) echo "OK: provider=minimax, key valid（转写请改用 aliyun/doubao/siliconflow）" ;;
-      401|403) fail "MiniMax key rejected ($http)" ;;
-      *) echo "OK: provider=minimax, key set (probe HTTP $http)" ;;
-    esac
-    ;;
   doubao)
     api="$(xy_get_volc_api_key)"; app="$(xy_get_volc_app_key)"; acc="$(xy_get_volc_access_key)"
     if [[ -n "$api" ]]; then
@@ -105,5 +93,7 @@ case "$PROVIDER" in
       *) echo "OK: provider=siliconflow, model=$model, key set (probe HTTP $http)" ;;
     esac
     ;;
-  *) fail "unknown provider '$PROVIDER'" ;;
+  *)
+    fail "unknown provider '$PROVIDER' (use: aliyun|doubao|siliconflow)"
+    ;;
 esac

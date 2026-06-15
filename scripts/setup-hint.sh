@@ -15,7 +15,6 @@ cat <<EOF
 转写前请至少配置一种后端（推荐阿里云百炼）：
 
   bash ${SKILL_DIR}/scripts/configure.sh aliyun sk-你的Key
-  bash ${SKILL_DIR}/scripts/configure.sh minimax sk-你的Key
   bash ${SKILL_DIR}/scripts/configure.sh doubao 你的火山API-Key
   bash ${SKILL_DIR}/scripts/configure.sh siliconflow sk-你的Key
 
@@ -24,7 +23,6 @@ cat <<EOF
 
 控制台：
   阿里云百炼  https://bailian.console.aliyun.com/
-  MiniMax     https://platform.minimaxi.com/user-center/basic-information/interface-key
   豆包语音    https://console.volcengine.com/speech
   硅基流动    https://cloud.siliconflow.cn/account/ak
 
@@ -41,15 +39,11 @@ cat <<'AGENT'
    控制台：https://bailian.console.aliyun.com/
    Key 格式：`sk-` 开头，需开通「语音识别 / fun-asr」
 
-2. **MiniMax**
-   控制台：https://platform.minimaxi.com/
-   Key 格式：`sk-` 开头（转写能力待官方 ASR 开放后可切换；可先配置备用）
-
-3. **豆包语音**（火山引擎）
+2. **豆包语音**（火山引擎）
    控制台：https://console.volcengine.com/speech
    新版控制台 API Key，或旧版 app_key + access_key
 
-4. **硅基流动 SiliconFlow**
+3. **硅基流动 SiliconFlow**
    控制台：https://cloud.siliconflow.cn/account/ak
    Key 格式：`sk-` 开头
 

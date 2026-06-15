@@ -15,9 +15,6 @@ bash scripts/configure.sh doubao --legacy <app-key> <access-key>
 # 硅基流动
 bash scripts/configure.sh siliconflow sk-xxxxxxxx [--model FunAudioLLM/SenseVoiceSmall]
 
-# MiniMax（存 Key 备用，转写请用 aliyun/doubao/siliconflow）
-bash scripts/configure.sh minimax sk-xxxxxxxx
-
 # 切换默认后端
 bash scripts/configure.sh default aliyun|doubao|siliconflow
 

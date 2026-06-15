@@ -3,11 +3,10 @@
 #
 # Usage:
 #   configure.sh aliyun sk-xxx [--model fun-asr]
-#   configure.sh minimax sk-xxx [--group-id ID]
 #   configure.sh doubao <api-key>
 #   configure.sh doubao --legacy <app-key> <access-key>
 #   configure.sh siliconflow sk-xxx [--model MODEL]
-#   configure.sh default aliyun|minimax|doubao|siliconflow
+#   configure.sh default aliyun|doubao|siliconflow
 #   configure.sh status
 
 set -euo pipefail
@@ -20,16 +19,14 @@ usage() {
   cat <<'EOF'
 Usage:
   configure.sh aliyun <sk-...> [--model fun-asr|paraformer-v2]
-  configure.sh minimax <sk-...> [--group-id GROUP_ID]
   configure.sh doubao <api-key>
   configure.sh doubao --legacy <app-key> <access-key>
   configure.sh siliconflow <sk-...> [--model MODEL]
-  configure.sh default <aliyun|minimax|doubao|siliconflow>
+  configure.sh default <aliyun|doubao|siliconflow>
   configure.sh status
 
 Keys:
   阿里云百炼  https://bailian.console.aliyun.com/
-  MiniMax     https://platform.minimaxi.com/
   豆包语音    https://console.volcengine.com/speech
   硅基流动    https://cloud.siliconflow.cn/account/ak
 EOF
@@ -59,26 +56,6 @@ case "$cmd" in
     printf '%s' "$MODEL" > "$(xy_config_path dashscope_model)"
     printf '%s' "aliyun" > "$(xy_config_path provider)"
     echo "OK: Aliyun DashScope configured, model=$MODEL"
-    ;;
-  minimax)
-    KEY="${1:?missing minimax api key}"
-    shift
-    [[ "$KEY" =~ ^sk- ]] || { echo "Error: MiniMax key should start with sk-" >&2; exit 1; }
-    GROUP_ID=""
-    while [[ $# -gt 0 ]]; do
-      case "$1" in
-        --group-id) GROUP_ID="${2:?}"; shift 2 ;;
-        *) echo "Unknown option: $1" >&2; exit 1 ;;
-      esac
-    done
-    printf '%s' "$KEY" > "$(xy_config_path minimax_api_key)"
-    chmod 600 "$(xy_config_path minimax_api_key)"
-    if [[ -n "$GROUP_ID" ]]; then
-      printf '%s' "$GROUP_ID" > "$(xy_config_path minimax_group_id)"
-      chmod 600 "$(xy_config_path minimax_group_id)"
-    fi
-    printf '%s' "minimax" > "$(xy_config_path provider)"
-    echo "OK: MiniMax configured (录音转写 ASR 待官方开放，当前请用 aliyun/doubao/siliconflow 转写)"
     ;;
   doubao)
     if [[ "${1:-}" == "--legacy" ]]; then
@@ -117,8 +94,8 @@ case "$cmd" in
     echo "OK: SiliconFlow configured, model=$MODEL"
     ;;
   default)
-    P="${1:?aliyun|minimax|doubao|siliconflow}"
-    [[ "$P" == "aliyun" || "$P" == "minimax" || "$P" == "doubao" || "$P" == "siliconflow" ]] || {
+    P="${1:?aliyun|doubao|siliconflow}"
+    [[ "$P" == "aliyun" || "$P" == "doubao" || "$P" == "siliconflow" ]] || {
       echo "Error: unknown provider $P" >&2; exit 1
     }
     printf '%s' "$P" > "$(xy_config_path provider)"

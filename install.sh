@@ -122,6 +122,6 @@ if [[ -n "$HINT_SCRIPT" ]]; then
   bash "$HINT_SCRIPT"
 else
   echo ""
-  echo "Done. Next: configure API Key — aliyun | minimax | doubao | siliconflow"
+  echo "Done. Next: configure API Key — aliyun | doubao | siliconflow"
   echo "  bash <skill-dir>/scripts/configure.sh aliyun sk_YOUR_KEY"
 fi

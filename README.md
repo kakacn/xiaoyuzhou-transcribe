@@ -7,7 +7,6 @@ Agent Skill：将小宇宙播客单集链接转为 Markdown 逐字稿。
 | **aliyun**（默认） | 阿里云百炼 DashScope `fun-asr`，公网 URL 直转 |
 | **doubao** | 火山引擎豆包大模型录音文件极速版 |
 | **siliconflow** | 硅基流动 SenseVoice / TeleSpeech ASR |
-| **minimax** | 仅 Key 配置（转写待官方 ASR 开放） |
 
 安装后运行 `bash scripts/setup-hint.sh` 查看向用户索取 API Key 的标准话术。
 
@@ -36,14 +35,6 @@ bash scripts/configure.sh doubao <API-Key>
 ```bash
 bash scripts/configure.sh siliconflow sk-你的Key
 ```
-
-### MiniMax（可选，转写待开放）
-
-```bash
-bash scripts/configure.sh minimax sk-你的Key
-```
-
-查看四后端状态：`bash scripts/configure.sh status`
 
 切换默认：`bash scripts/configure.sh default doubao`
 

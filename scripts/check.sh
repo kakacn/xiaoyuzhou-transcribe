@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Verify xiaoyuzhou-transcribe prerequisites.
-# Prints OK or actionable error.
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/config.sh
+source "$SCRIPT_DIR/lib/config.sh"
 
 fail() { echo "FAIL: $1" >&2; exit 1; }
 
@@ -11,21 +14,50 @@ command -v ffprobe >/dev/null 2>&1 || fail "ffprobe not found (brew install ffmp
 command -v curl >/dev/null 2>&1 || fail "curl not found"
 command -v python3 >/dev/null 2>&1 || fail "python3 not found"
 
-KEY_FILE="$HOME/.xiaoyuzhou-transcribe/groq_api_key"
-if [[ -z "${GROQ_API_KEY:-}" ]]; then
-  [[ -f "$KEY_FILE" ]] || fail "Groq API Key not configured. Open https://console.groq.com/keys then run: bash scripts/configure.sh gsk_..."
-  GROQ_API_KEY=$(tr -d '[:space:]' < "$KEY_FILE")
-fi
+PROVIDER="$(xy_get_provider)"
 
-[[ -n "$GROQ_API_KEY" ]] || fail "Empty Groq API Key"
+check_aliyun() {
+  local key model
+  key="$(xy_get_dashscope_key)"
+  [[ -n "$key" ]] || fail "DashScope API Key not configured. Run: bash scripts/configure.sh aliyun sk-..."
+  model="$(xy_get_dashscope_model)"
+  # lightweight probe: models list
+  local http
+  http=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer ${key}" \
+    "https://dashscope.aliyuncs.com/api/v1/models")
+  case "$http" in
+    200) echo "OK: ffmpeg ready, provider=aliyun, model=$model, DashScope API key valid" ;;
+    401|403) fail "DashScope API key rejected ($http). Get key at https://bailian.console.aliyun.com/" ;;
+    *) echo "OK: ffmpeg ready, provider=aliyun, model=$model, DashScope key set (probe HTTP $http)" ;;
+  esac
+}
 
-HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
-  -H "Authorization: Bearer ${GROQ_API_KEY}" \
-  https://api.groq.com/openai/v1/models)
+check_groq() {
+  local key
+  key="$(xy_get_groq_key)"
+  [[ -n "$key" ]] || fail "Groq API Key not configured. Run: bash scripts/configure.sh groq gsk_..."
+  local http
+  http=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer ${key}" \
+    https://api.groq.com/openai/v1/models)
+  case "$http" in
+    200) echo "OK: ffmpeg ready, provider=groq, Groq API key valid" ;;
+    401) fail "Groq API key rejected (401)" ;;
+    429) echo "OK: ffmpeg ready, provider=groq, Groq key set (rate limited on probe)" ;;
+    *) fail "Groq API probe returned HTTP $http" ;;
+  esac
+}
 
-case "$HTTP" in
-  200) echo "OK: ffmpeg ready, Groq API key valid" ;;
-  401) fail "Groq API key rejected (401). Create a new key at https://console.groq.com/keys" ;;
-  429) echo "OK: ffmpeg ready, Groq key set (rate limited on probe, should still work)" ;;
-  *) fail "Groq API probe returned HTTP $HTTP" ;;
+case "$PROVIDER" in
+  aliyun) check_aliyun ;;
+  groq) check_groq ;;
+  *) fail "unknown provider '$PROVIDER' in $(xy_config_path provider)" ;;
 esac
+
+# show fallback availability
+if [[ "$PROVIDER" == "aliyun" ]] && [[ -n "$(xy_get_groq_key)" ]]; then
+  echo "    fallback: groq key also configured"
+elif [[ "$PROVIDER" == "groq" ]] && [[ -n "$(xy_get_dashscope_key)" ]]; then
+  echo "    fallback: aliyun key also configured"
+fi

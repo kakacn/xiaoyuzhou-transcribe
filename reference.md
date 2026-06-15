@@ -1,76 +1,76 @@
-# 小宇宙播客转写 — 参考手册
+# 参考手册
 
 仓库：https://github.com/kakacn/xiaoyuzhou-transcribe
 
-## Groq API Key 获取步骤（给安装人）
+## 阿里云百炼 API Key
 
-1. 打开 https://console.groq.com
-2. 用 Google / GitHub / 邮箱注册并登录
-3. 进入 https://console.groq.com/keys
-4. 点击 **Create API Key**，命名（如 `xiaoyuzhou`）
-5. **立即复制**完整 Key（`gsk_` 开头，只显示一次）
-6. 交给 Agent 或自行执行：
-   ```bash
-   bash scripts/configure.sh "gsk_xxxxxxxx"
-   ```
+1. https://bailian.console.aliyun.com/
+2. 创建 API Key（`sk-` 开头）
+3. 开通「语音识别」→ 录音文件识别（fun-asr / Paraformer）
+4. `bash scripts/configure.sh aliyun sk-xxx`
 
-## 手动提取音频 URL
+## 配置命令
 
 ```bash
-EPISODE_URL="https://www.xiaoyuzhoufm.com/episode/EPISODE_ID"
-curl -sL "$EPISODE_URL" -o /tmp/xyz.html
+# 阿里云（推荐）
+bash scripts/configure.sh aliyun sk-xxxxxxxx [--model fun-asr]
 
-# 方法 A：正则（含 .mp4a）
-grep -oE 'https://media\.xyzcdn\.net/[^"[:space:]]+\.(m4a|mp3|mp4a)' /tmp/xyz.html | head -1
+# Groq 备选
+bash scripts/configure.sh groq gsk-xxxxxxxx
 
-# 方法 B：__NEXT_DATA__ JSON
-python3 <<'PY'
-import re, json
-html = open("/tmp/xyz.html", encoding="utf-8").read()
-m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.S)
-ep = json.loads(m.group(1))["props"]["pageProps"]["episode"]
-media = ep.get("media", {})
-print(media.get("backupSource", {}).get("url") or ep.get("enclosure", {}).get("url"))
-print("title:", ep.get("title"))
-print("duration:", ep.get("duration"), "sec")
-PY
+# 切换默认后端
+bash scripts/configure.sh default aliyun
+bash scripts/configure.sh default groq
 ```
 
-## 手动 Groq Whisper 调用
+## 百炼 REST API（手动）
+
+提交任务：
 
 ```bash
-GROQ_API_KEY=$(tr -d '[:space:]' < "$HOME/.xiaoyuzhou-transcribe/groq_api_key")
+curl -X POST 'https://dashscope.aliyuncs.com/api/v1/services/audio/asr/transcription' \
+  -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-DashScope-Async: enable" \
+  -d '{
+    "model": "fun-asr",
+    "input": {"file_urls": ["https://media.xyzcdn.net/.../xxx.mp4a"]},
+    "parameters": {"channel_id": [0], "language_hints": ["zh", "en"]}
+  }'
+```
 
+查询任务：
+
+```bash
+curl -H "Authorization: Bearer $DASHSCOPE_API_KEY" \
+  "https://dashscope.aliyuncs.com/api/v1/tasks/TASK_ID"
+```
+
+成功后从 `output.results[0].transcription_url` 下载 JSON，取 `transcripts[0].text`。
+
+## 小宇宙音频 URL 提取
+
+见原 manual 流程；注意后缀常为 **`.mp4a`**。
+
+百炼要求 **公网 HTTPS URL**。小宇宙 CDN 链接通常可直接用于 `file_urls`，无需本地下载。
+
+## Groq 手动调用（fallback）
+
+```bash
+GROQ_API_KEY=$(tr -d '[:space:]' < ~/.xiaoyuzhou-transcribe/groq_api_key)
 curl -s https://api.groq.com/openai/v1/audio/transcriptions \
   -H "Authorization: Bearer $GROQ_API_KEY" \
-  -F file="@chunk_0.mp3" \
+  -F file="@chunk.mp3" \
   -F model="whisper-large-v3" \
   -F language="zh" \
-  -F prompt="以下是一段中文普通话播客录音，请输出包含完整中文标点的转写文本。" \
   -F response_format="text"
 ```
 
-## 噪声清理正则（Python）
+## 费用参考（阿里云，以控制台为准）
 
-```python
-import re
-NOISE = [
-    r"请不吝点赞\s*订阅\s*转发\s*打赏支持明镜与点点栏目",
-    r"请不吝点赞\s*订阅\s*转发\s*打赏支持明镜及点点栏目",
-    r"请输出包含完整中文标点[^。]*。",
-    r"请输出包含文本。",
-]
-for p in NOISE:
-    text = re.sub(p, "", text)
-```
+- fun-asr / paraformer：按音频时长计费，通常远低于 OpenAI Whisper
+- 单集 1 小时播客：约几毛钱量级（请以账单为准）
 
 ## 与 agent-reach 的关系
 
-若已安装 [Agent Reach](https://github.com/Panniantong/Agent-Reach)，也可：
-
-```bash
-agent-reach configure groq-key gsk_xxx
-~/.agent-reach/tools/xiaoyuzhou/transcribe.sh --polish "EPISODE_URL"
-```
-
-注意：agent-reach 内置脚本可能未匹配 `.mp4a` 后缀；本 skill 的 `transcribe.sh` 已修复。
+agent-reach 小宇宙工具仍走 Groq。本 skill 独立维护，**默认阿里云**，更适合国内用户。

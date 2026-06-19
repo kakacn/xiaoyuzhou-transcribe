@@ -65,6 +65,19 @@ curl https://api.siliconflow.cn/v1/audio/transcriptions \
   -F model="FunAudioLLM/SenseVoiceSmall"
 ```
 
+## 本地输出
+
+默认目录：`~/.xiaoyuzhou-transcribe/output/`
+
+| 类型 | 文件名 |
+|------|--------|
+| 逐字稿 | `<播客标题>.md` |
+| 总结 | `<播客标题> - 总结.md` |
+
+自定义目录：写入 `~/.xiaoyuzhou-transcribe/output_dir`，或设置 `XIAOYUZHOU_OUTPUT_DIR`。
+
+转写完成后会写入 `last_run.env`（含 `TRANSCRIPT_PATH`、`SUMMARY_PATH`），供 `save_summary.sh` 使用。
+
 ## 小宇宙音频 URL 提取
 
 从页面 `__NEXT_DATA__` 或正则取 `media.xyzcdn.net/...mp4a`。

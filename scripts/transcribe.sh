@@ -3,6 +3,8 @@
 #
 # Usage:
 #   transcribe.sh [--provider aliyun|doubao|siliconflow] [--model MODEL] <url> [out.md]
+#
+# Default output: ~/.xiaoyuzhou-transcribe/output/<播客标题>.md
 
 set -euo pipefail
 
@@ -12,12 +14,14 @@ source "$SCRIPT_DIR/lib/config.sh"
 
 PROVIDER=""
 MODEL_OVERRIDE=""
+EXPLICIT_OUTPUT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --provider) PROVIDER="${2:?}"; shift 2 ;;
     --model) MODEL_OVERRIDE="${2:?}"; shift 2 ;;
     -h|--help)
       echo "Usage: transcribe.sh [--provider aliyun|doubao|siliconflow] [--model MODEL] <episode_url> [output.md]"
+      echo "Default output: \$(xy_get_output_dir)/<播客标题>.md"
       exit 0
       ;;
     --) shift; break ;;
@@ -27,10 +31,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 URL="${1:?Usage: transcribe.sh <episode_url> [output.md]}"
-EPISODE_ID=$(echo "$URL" | grep -oE '[a-f0-9]{24}' | tail -1)
-OUTPUT="${2:-/tmp/xiaoyuzhou_${EPISODE_ID:-out}.md}"
+EXPLICIT_OUTPUT="${2:-}"
 TMPDIR="/tmp/xiaoyuzhou_$$"
 AUDIO_BITRATE="64k"
+OUTPUT=""
 
 PROVIDER="${PROVIDER:-$(xy_get_provider)}"
 
@@ -42,42 +46,62 @@ for cmd in ffmpeg ffprobe curl python3; do
 done
 mkdir -p "$TMPDIR"
 
-NUM_CHUNKS=1
 ENGINE_NAME=""
 DURATION_MIN=0
 DURATION_SEC=0
 TITLE=""
 AUDIO_URL=""
 DURATION=""
+SUMMARY_PATH=""
 
 fetch_episode_meta() {
   echo "==> Fetching episode page"
   PAGE=$(curl -sL "$URL" -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
-  AUDIO_URL=$(echo "$PAGE" | grep -oE 'https://media\.xyzcdn\.net/[^"[:space:]]+\.(m4a|mp3|mp4a)' | head -1 || true)
-
-  if [[ -z "$AUDIO_URL" ]]; then
-    python3 - "$PAGE" > "$TMPDIR/meta.env" <<'PY'
-import re, json, sys
+  python3 - "$PAGE" > "$TMPDIR/meta.env" <<'PY'
+import json, re, sys
 html = sys.stdin.read()
+title, audio_url, duration = "", "", ""
 m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.S)
-ep = json.loads(m.group(1))["props"]["pageProps"]["episode"]
-media = ep.get("media", {})
-url = (media.get("backupSource") or {}).get("url") or (ep.get("enclosure") or {}).get("url") or ""
-print(f'AUDIO_URL={url!r}')
-print(f'TITLE={ep.get("title", "")!r}')
-print(f'DURATION={ep.get("duration", "")!r}')
+if m:
+    ep = json.loads(m.group(1))["props"]["pageProps"]["episode"]
+    title = ep.get("title") or ""
+    duration = str(ep.get("duration") or "")
+    media = ep.get("media") or {}
+    audio_url = (media.get("backupSource") or {}).get("url") or (ep.get("enclosure") or {}).get("url") or ""
+if not audio_url:
+    urls = re.findall(r'https://media\.xyzcdn\.net/[^"[:space:]]+\.(?:m4a|mp3|mp4a)', html)
+    audio_url = urls[0] if urls else ""
+if not title:
+    tm = re.search(r'"title":"((?:\\.|[^"\\])*)"', html)
+    if tm:
+        title = json.loads(f'"{tm.group(1)}"')
+print(f"AUDIO_URL={audio_url!r}")
+print(f"TITLE={title!r}")
+print(f"DURATION={duration!r}")
 PY
-    # shellcheck disable=SC1090
-    source "$TMPDIR/meta.env"
-    AUDIO_URL="${AUDIO_URL//\'/}"
-    TITLE="${TITLE//\'/}"
-    DURATION="${DURATION//\'/}"
-  else
-    TITLE=$(echo "$PAGE" | grep -o '"title":"[^"]*"' | head -1 | sed 's/"title":"//;s/"$//')
-  fi
+  # shellcheck disable=SC1090
+  source "$TMPDIR/meta.env"
+  AUDIO_URL="${AUDIO_URL//\'/}"
+  TITLE="${TITLE//\'/}"
+  DURATION="${DURATION//\'/}"
   [[ -n "$AUDIO_URL" ]] || { echo "Error: cannot extract audio URL" >&2; exit 1; }
+  [[ -n "$TITLE" ]] || TITLE="未命名播客"
   echo "    Title: $TITLE"
   echo "    Audio: $AUDIO_URL"
+}
+
+resolve_output_paths() {
+  local out_dir
+  out_dir="$(xy_ensure_output_dir)"
+  if [[ -n "$EXPLICIT_OUTPUT" ]]; then
+    OUTPUT="$EXPLICIT_OUTPUT"
+  else
+    OUTPUT=$(python3 "$SCRIPT_DIR/lib/paths.py" transcript-path "$out_dir" "$TITLE")
+  fi
+  SUMMARY_PATH=$(python3 "$SCRIPT_DIR/lib/paths.py" summary-for-transcript "$OUTPUT")
+  mkdir -p "$(dirname "$OUTPUT")"
+  echo "    Transcript file: $OUTPUT"
+  echo "    Summary file:    $SUMMARY_PATH"
 }
 
 set_duration_vars() {
@@ -166,7 +190,16 @@ noise = [
 for p in noise:
     text = re.sub(p, "", text)
 text = re.sub(r"\n{3,}", "\n\n", text)
-header = f"""# {title}
+header = f"""---
+title: "{title}"
+type: transcript
+source_url: "{url}"
+duration: "{dm}分{ds}秒"
+transcribed_at: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+engine: "{engine}"
+---
+
+# {title}
 
 来源: {url}
 时长: {dm}分{ds}秒
@@ -184,6 +217,7 @@ PY
 }
 
 fetch_episode_meta
+resolve_output_paths
 case "$PROVIDER" in
   aliyun) transcribe_aliyun ;;
   doubao) transcribe_doubao ;;
@@ -191,4 +225,6 @@ case "$PROVIDER" in
   *) echo "Error: unknown provider '$PROVIDER'" >&2; exit 1 ;;
 esac
 merge_output
+xy_write_last_run "$OUTPUT" "$SUMMARY_PATH" "$TITLE" "$URL"
 echo "==> Done"
+echo "    Next: summarize, then bash $SCRIPT_DIR/save_summary.sh - < summary.md"

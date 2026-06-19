@@ -43,12 +43,14 @@ bash scripts/configure.sh siliconflow sk-你的Key
 ## 使用
 
 ```bash
-# 默认阿里云
+# 默认保存到 ~/.xiaoyuzhou-transcribe/output/<播客标题>.md
 bash scripts/transcribe.sh "https://www.xiaoyuzhoufm.com/episode/EPISODE_ID"
 
-# 指定后端 / 模型
-bash scripts/transcribe.sh --provider siliconflow "EPISODE_URL"
-bash scripts/transcribe.sh --model paraformer-v2 "EPISODE_URL"
+# 转写 + 总结（Agent 撰写总结后落盘）
+bash scripts/save_summary.sh - <<'EOF'
+## 核心内容
+...
+EOF
 ```
 
 对 AI 说：
@@ -83,10 +85,11 @@ scripts/
 ├── configure.sh           # 配置 aliyun / doubao / siliconflow
 ├── check.sh
 ├── transcribe.sh          # 主入口
+├── save_summary.sh        # 保存总结到本地
 ├── aliyun_transcribe.py
 ├── doubao_transcribe.py
 ├── siliconflow_transcribe.py
-└── lib/config.sh
+└── lib/config.sh, paths.py
 ```
 
 ## License

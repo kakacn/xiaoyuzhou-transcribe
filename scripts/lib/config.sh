@@ -76,3 +76,39 @@ xy_provider_configured() {
     *) return 1 ;;
   esac
 }
+
+# 本地输出目录（逐字稿 + 总结），默认 ~/.xiaoyuzhou-transcribe/output
+xy_get_output_dir() {
+  if [[ -n "${XIAOYUZHOU_OUTPUT_DIR:-}" ]]; then
+    echo "$XIAOYUZHOU_OUTPUT_DIR"
+    return
+  fi
+  local f
+  f="$(xy_config_path output_dir)"
+  if [[ -f "$f" ]]; then
+    cat "$f"
+  else
+    echo "$(xy_config_path output)"
+  fi
+}
+
+xy_ensure_output_dir() {
+  local d
+  d="$(xy_get_output_dir)"
+  mkdir -p "$d"
+  chmod 700 "$(xy_config_path)" 2>/dev/null || true
+  echo "$d"
+}
+
+xy_write_last_run() {
+  local transcript="$1" summary="$2" title="$3" url="$4"
+  local f
+  f="$(xy_config_path last_run.env)"
+  {
+    printf 'TRANSCRIPT_PATH=%q\n' "$transcript"
+    printf 'SUMMARY_PATH=%q\n' "$summary"
+    printf 'TITLE=%q\n' "$title"
+    printf 'URL=%q\n' "$url"
+  } > "$f"
+  chmod 600 "$f"
+}

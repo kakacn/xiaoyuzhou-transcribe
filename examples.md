@@ -28,13 +28,18 @@ bash scripts/configure.sh siliconflow sk-xxxxxxxx
 bash scripts/transcribe.sh --provider siliconflow "EPISODE_URL"
 ```
 
-## 示例 5：转写 + 总结
+## 示例 5：转写 + 总结（本地双文件）
 
-用户：
+```bash
+bash scripts/transcribe.sh "EPISODE_URL"
+# → ~/.xiaoyuzhou-transcribe/output/播客原标题.md
 
+# Agent 撰写总结后保存
+bash scripts/save_summary.sh - <<'EOF'
+## 核心内容
+...
+EOF
+# → ~/.xiaoyuzhou-transcribe/output/播客原标题 - 总结.md
 ```
-帮我把这期小宇宙播客转成逐字稿并总结
-https://www.xiaoyuzhoufm.com/episode/EPISODE_ID
-```
 
-Agent：`check.sh` → 配置 API Key → `transcribe.sh` → 输出核心内容 / 建议 / 金句
+Agent 流程：`transcribe.sh` → 读逐字稿写总结 → `save_summary.sh` → 回复用户并给出两个文件路径。

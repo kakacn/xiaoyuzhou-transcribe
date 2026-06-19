@@ -1,6 +1,6 @@
 # xiaoyuzhou-transcribe
 
-Agent Skill：将小宇宙播客单集链接转为 Markdown 逐字稿。
+Agent Skill：将小宇宙播客单集链接转为 Markdown 逐字稿，并**自动生成总结**，双文件本地保存。
 
 | 后端 | 说明 |
 |------|------|
@@ -18,6 +18,8 @@ Agent Skill：将小宇宙播客单集链接转为 Markdown 逐字稿。
 
 ```bash
 bash scripts/configure.sh aliyun sk-你的Key
+# 可选：指定总结模型（默认 qwen-plus）
+bash scripts/configure.sh aliyun sk-你的Key --summary-model qwen-long
 bash scripts/check.sh
 ```
 
@@ -43,20 +45,19 @@ bash scripts/configure.sh siliconflow sk-你的Key
 ## 使用
 
 ```bash
-# 默认保存到 ~/.xiaoyuzhou-transcribe/output/<播客标题>.md
+# 转写 + 自动总结 → 两个文件
 bash scripts/transcribe.sh "https://www.xiaoyuzhoufm.com/episode/EPISODE_ID"
+# ~/.xiaoyuzhou-transcribe/output/<播客标题>.md
+# ~/.xiaoyuzhou-transcribe/output/<播客标题> - 总结.md
 
-# 转写 + 总结（Agent 撰写总结后落盘）
-bash scripts/save_summary.sh - <<'EOF'
-## 核心内容
-...
-EOF
+# 仅转写，不要总结
+bash scripts/transcribe.sh --no-summary "EPISODE_URL"
 ```
 
 对 AI 说：
 
 ```
-帮我把这期小宇宙播客转成逐字稿
+帮我把这期小宇宙播客转成逐字稿并总结
 https://www.xiaoyuzhoufm.com/episode/EPISODE_ID
 ```
 
@@ -84,8 +85,9 @@ curl -fsSL https://raw.githubusercontent.com/kakacn/xiaoyuzhou-transcribe/main/i
 scripts/
 ├── configure.sh           # 配置 aliyun / doubao / siliconflow
 ├── check.sh
-├── transcribe.sh          # 主入口
-├── save_summary.sh        # 保存总结到本地
+├── transcribe.sh          # 主入口（转写 + 自动总结）
+├── summarize_transcript.py # DashScope 总结
+├── save_summary.sh        # 手动覆盖总结
 ├── aliyun_transcribe.py
 ├── doubao_transcribe.py
 ├── siliconflow_transcribe.py

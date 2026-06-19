@@ -15,13 +15,15 @@ source "$SCRIPT_DIR/lib/config.sh"
 PROVIDER=""
 MODEL_OVERRIDE=""
 EXPLICIT_OUTPUT=""
+SKIP_SUMMARY=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --provider) PROVIDER="${2:?}"; shift 2 ;;
     --model) MODEL_OVERRIDE="${2:?}"; shift 2 ;;
+    --no-summary) SKIP_SUMMARY=1; shift ;;
     -h|--help)
-      echo "Usage: transcribe.sh [--provider aliyun|doubao|siliconflow] [--model MODEL] <episode_url> [output.md]"
-      echo "Default output: \$(xy_get_output_dir)/<播客标题>.md"
+      echo "Usage: transcribe.sh [--provider aliyun|doubao|siliconflow] [--model MODEL] [--no-summary] <episode_url> [output.md]"
+      echo "Default: transcribe + auto summary (DashScope qwen-plus) → output/<播客标题>.md and <播客标题> - 总结.md"
       exit 0
       ;;
     --) shift; break ;;
@@ -216,6 +218,23 @@ print(f"    Chars: {len(text)}")
 PY
 }
 
+generate_and_save_summary() {
+  local key model
+  key="$(xy_get_dashscope_key)"
+  if [[ -z "$key" ]]; then
+    echo "Error: auto summary requires DashScope API key (configure.sh aliyun sk-...)" >&2
+    echo "    Transcript saved; run save_summary.sh manually or configure aliyun key." >&2
+    return 1
+  fi
+  model="$(xy_get_summary_model)"
+  echo "==> Generating summary (DashScope $model)"
+  python3 "$SCRIPT_DIR/summarize_transcript.py" \
+    --api-key "$key" --model "$model" \
+    --transcript "$OUTPUT" --title "$TITLE" \
+    --output "$TMPDIR/summary_body.md"
+  bash "$SCRIPT_DIR/save_summary.sh" --transcript "$OUTPUT" "$TMPDIR/summary_body.md"
+}
+
 fetch_episode_meta
 resolve_output_paths
 case "$PROVIDER" in
@@ -225,6 +244,12 @@ case "$PROVIDER" in
   *) echo "Error: unknown provider '$PROVIDER'" >&2; exit 1 ;;
 esac
 merge_output
+if [[ $SKIP_SUMMARY -eq 0 ]]; then
+  if ! generate_and_save_summary; then
+    echo "WARN: summary generation failed; transcript is saved at $OUTPUT" >&2
+  fi
+fi
 xy_write_last_run "$OUTPUT" "$SUMMARY_PATH" "$TITLE" "$URL"
 echo "==> Done"
-echo "    Next: summarize, then bash $SCRIPT_DIR/save_summary.sh - < summary.md"
+echo "    Transcript: $OUTPUT"
+echo "    Summary:    $SUMMARY_PATH"

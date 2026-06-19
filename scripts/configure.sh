@@ -18,7 +18,7 @@ source "$SCRIPT_DIR/lib/config.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  configure.sh aliyun <sk-...> [--model fun-asr|paraformer-v2]
+  configure.sh aliyun <sk-...> [--model fun-asr|paraformer-v2] [--summary-model qwen-plus|qwen-long]
   configure.sh doubao <api-key>
   configure.sh doubao --legacy <app-key> <access-key>
   configure.sh siliconflow <sk-...> [--model MODEL]
@@ -45,17 +45,20 @@ case "$cmd" in
     shift
     [[ "$KEY" =~ ^sk- ]] || { echo "Error: DashScope key should start with sk-" >&2; exit 1; }
     MODEL="fun-asr"
+    SUMMARY_MODEL="qwen-plus"
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --model) MODEL="${2:?}"; shift 2 ;;
+        --summary-model) SUMMARY_MODEL="${2:?}"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
       esac
     done
     printf '%s' "$KEY" > "$(xy_config_path dashscope_api_key)"
     chmod 600 "$(xy_config_path dashscope_api_key)"
     printf '%s' "$MODEL" > "$(xy_config_path dashscope_model)"
+    printf '%s' "$SUMMARY_MODEL" > "$(xy_config_path summary_model)"
     printf '%s' "aliyun" > "$(xy_config_path provider)"
-    echo "OK: Aliyun DashScope configured, model=$MODEL"
+    echo "OK: Aliyun DashScope configured, asr_model=$MODEL summary_model=$SUMMARY_MODEL"
     ;;
   doubao)
     if [[ "${1:-}" == "--legacy" ]]; then

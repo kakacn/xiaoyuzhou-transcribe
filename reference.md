@@ -6,7 +6,7 @@
 
 ```bash
 # 阿里云（推荐）
-bash scripts/configure.sh aliyun sk-xxxxxxxx [--model fun-asr]
+bash scripts/configure.sh aliyun sk-xxxxxxxx [--model fun-asr] [--summary-model qwen-plus]
 
 # 豆包语音
 bash scripts/configure.sh doubao <api-key>
@@ -76,7 +76,15 @@ curl https://api.siliconflow.cn/v1/audio/transcriptions \
 
 自定义目录：写入 `~/.xiaoyuzhou-transcribe/output_dir`，或设置 `XIAOYUZHOU_OUTPUT_DIR`。
 
-转写完成后会写入 `last_run.env`（含 `TRANSCRIPT_PATH`、`SUMMARY_PATH`），供 `save_summary.sh` 使用。
+转写完成后会写入 `last_run.env`（含 `TRANSCRIPT_PATH`、`SUMMARY_PATH`）。
+
+## 自动总结
+
+`transcribe.sh` 在保存逐字稿后，默认调用 DashScope 兼容接口（`qwen-plus`）生成总结，结构为「核心内容 / 建议 / 金句」。长文本采用分段摘要再合并（map-reduce）。
+
+- 配置：`~/.xiaoyuzhou-transcribe/summary_model` 或 `configure.sh aliyun sk-... --summary-model qwen-long`
+- 跳过：`transcribe.sh --no-summary`
+- 手动覆盖：`save_summary.sh`
 
 ## 小宇宙音频 URL 提取
 

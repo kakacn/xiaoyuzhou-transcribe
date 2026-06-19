@@ -38,6 +38,12 @@ xy_get_dashscope_model() {
   echo "${v:-fun-asr}"
 }
 
+xy_get_summary_model() {
+  local v
+  v="$(xy_read_file "$(xy_config_path summary_model)")"
+  echo "${v:-qwen-plus}"
+}
+
 # 豆包语音：新版控制台仅 X-Api-Key；旧版需 app_key + access_key
 xy_get_volc_api_key() {
   [[ -n "${VOLCENGINE_API_KEY:-}" ]] && echo "$VOLCENGINE_API_KEY" && return

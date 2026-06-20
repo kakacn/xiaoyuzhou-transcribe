@@ -41,7 +41,7 @@ xy_get_dashscope_model() {
 xy_get_summary_model() {
   local v
   v="$(xy_read_file "$(xy_config_path summary_model)")"
-  echo "${v:-qwen-plus}"
+  echo "${v:-qwen-long}"
 }
 
 # 豆包语音：新版控制台仅 X-Api-Key；旧版需 app_key + access_key

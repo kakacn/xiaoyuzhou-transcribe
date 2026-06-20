@@ -18,7 +18,7 @@ Agent Skill：将小宇宙播客单集链接转为 Markdown 逐字稿，并**自
 
 ```bash
 bash scripts/configure.sh aliyun sk-你的Key
-# 可选：指定总结模型（默认 qwen-plus）
+# 总结模型默认 qwen-long（长播客）；短播客可改为 qwen-plus
 bash scripts/configure.sh aliyun sk-你的Key --summary-model qwen-long
 bash scripts/check.sh
 ```

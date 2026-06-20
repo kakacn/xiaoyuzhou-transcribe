@@ -37,7 +37,7 @@ metadata: {"openclaw":{"requires":{"bins":["curl","ffmpeg","ffprobe","python3"]}
 | **ASR 转写** | aliyun | DashScope `fun-asr`，公网 URL 直转 |
 | | doubao | 火山引擎豆包「大模型录音文件极速版」 |
 | | siliconflow | 硅基流动 SenseVoice / TeleSpeech |
-| **总结** | DashScope `qwen-plus` | 转写完成后自动调用；需配置百炼 API Key |
+| **总结** | DashScope `qwen-long` | 转写完成后自动调用；需配置百炼 API Key |
 
 > 即使用 doubao / siliconflow 做 ASR，总结仍走百炼文本模型（同一 `sk-` Key）。未配置 Key 时只保存逐字稿。
 
@@ -91,7 +91,7 @@ bash {baseDir}/scripts/transcribe.sh "https://www.xiaoyuzhoufm.com/episode/EPISO
 - `--no-summary` — 仅转写，不生成总结
 - 第三参数 — 覆盖逐字稿输出路径
 
-配置总结模型：`configure.sh aliyun sk-... --summary-model qwen-long`
+配置总结模型：`configure.sh aliyun sk-... --summary-model qwen-plus`（短播客可改用 plus 提速）
 
 ## 故障排查
 
@@ -99,7 +99,7 @@ bash {baseDir}/scripts/transcribe.sh "https://www.xiaoyuzhoufm.com/episode/EPISO
 |------|------|
 | 未配置任何 Key | 运行 `setup-hint.sh`，向用户索取 Key |
 | 有逐字稿无总结 | 检查百炼 Key；或手动 `save_summary.sh` |
-| 总结质量不佳 | `configure.sh aliyun sk-... --summary-model qwen-long` 后重跑 |
+| 总结质量不佳 / 输出截断 | 确认使用 `qwen-long`（默认）；或重跑 `transcribe.sh` |
 | 文件名不对 | 检查 `__NEXT_DATA__` 中的 title；可手动指定输出路径 |
 
 ## 附加资源

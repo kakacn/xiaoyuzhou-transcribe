@@ -18,7 +18,7 @@ source "$SCRIPT_DIR/lib/config.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  configure.sh aliyun <sk-...> [--model fun-asr|paraformer-v2] [--summary-model qwen-plus|qwen-long]
+  configure.sh aliyun <sk-...> [--model fun-asr|paraformer-v2] [--summary-model qwen-long|qwen-plus]
   configure.sh doubao <api-key>
   configure.sh doubao --legacy <app-key> <access-key>
   configure.sh siliconflow <sk-...> [--model MODEL]
@@ -45,7 +45,7 @@ case "$cmd" in
     shift
     [[ "$KEY" =~ ^sk- ]] || { echo "Error: DashScope key should start with sk-" >&2; exit 1; }
     MODEL="fun-asr"
-    SUMMARY_MODEL="qwen-plus"
+    SUMMARY_MODEL="qwen-long"
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --model) MODEL="${2:?}"; shift 2 ;;

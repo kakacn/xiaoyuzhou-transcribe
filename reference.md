@@ -6,7 +6,7 @@
 
 ```bash
 # 阿里云（推荐）
-bash scripts/configure.sh aliyun sk-xxxxxxxx [--model fun-asr] [--summary-model qwen-plus]
+bash scripts/configure.sh aliyun sk-xxxxxxxx [--model fun-asr] [--summary-model qwen-long]
 
 # 豆包语音
 bash scripts/configure.sh doubao <api-key>
@@ -80,9 +80,10 @@ curl https://api.siliconflow.cn/v1/audio/transcriptions \
 
 ## 自动总结
 
-`transcribe.sh` 在保存逐字稿后，默认调用 DashScope 兼容接口（`qwen-plus`）生成总结，结构为「核心内容 / 建议 / 金句」。长文本采用分段摘要再合并（map-reduce）。
+`transcribe.sh` 在保存逐字稿后，默认调用 DashScope 兼容接口（`qwen-long`）做**播客深度提炼**，输出六章结构：基本信息、核心观点（含原话）、时间线高光、金句、可行动启发、批判性思考。长文本采用分段深度提炼再合并（map-reduce）。
 
-- 配置：`~/.xiaoyuzhou-transcribe/summary_model` 或 `configure.sh aliyun sk-... --summary-model qwen-long`
+- 配置：`~/.xiaoyuzhou-transcribe/summary_model` 或 `configure.sh aliyun sk-... --summary-model qwen-long`（默认）
+- 短播客提速：`--summary-model qwen-plus`
 - 跳过：`transcribe.sh --no-summary`
 - 手动覆盖：`save_summary.sh`
 

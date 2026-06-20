@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
     --no-summary) SKIP_SUMMARY=1; shift ;;
     -h|--help)
       echo "Usage: transcribe.sh [--provider aliyun|doubao|siliconflow] [--model MODEL] [--no-summary] <episode_url> [output.md]"
-      echo "Default: transcribe + auto summary (DashScope qwen-plus) → output/<播客标题>.md and <播客标题> - 总结.md"
+      echo "Default: transcribe + auto summary (DashScope qwen-long) → output/<播客标题>.md and <播客标题> - 总结.md"
       exit 0
       ;;
     --) shift; break ;;
